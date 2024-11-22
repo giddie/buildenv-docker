@@ -14,6 +14,15 @@ host_uid=$(stat -c %u .)
 host_group=$(stat -c %g .)
 # groupadd -g $host_group user
 # useradd -mg $host_group -u $host_uid user 2> /dev/null
-chown $host_uid:$host_group /home/user
+# chown $host_uid:$host_group /home/user
 
-exec gosu $host_uid /usr/local/bin/entrypoint-user.sh "$@"
+echo "ubuntu ALL=(ALL:ALL) ALL" > /etc/sudoers.d/ubuntu
+echo "ubuntu:secret" | chpasswd
+
+exec setpriv \
+  --reuid $host_uid \
+  --regid $host_group \
+  --init-groups \
+  --reset-env \
+  /usr/local/bin/entrypoint-user.sh \
+  "$@"
